@@ -15,6 +15,8 @@ public partial class User24Context : DbContext
     {
     }
 
+    public virtual DbSet<Admin> Admins { get; set; }
+
     public virtual DbSet<Check> Checks { get; set; }
 
     public virtual DbSet<Muscle> Muscles { get; set; }
@@ -31,6 +33,14 @@ public partial class User24Context : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Admin>(entity =>
+        {
+            entity.ToTable("Admin");
+
+            entity.Property(e => e.AdmName).HasMaxLength(50);
+            entity.Property(e => e.AdmPassword).HasMaxLength(50);
+        });
+
         modelBuilder.Entity<Check>(entity =>
         {
             entity.ToTable("Check");
