@@ -1,6 +1,6 @@
 ﻿namespace Chizh.DTO
 {
-    public class CheckDTO
+    public partial class CheckDTO
     {
         public int Id { get; set; }
 
