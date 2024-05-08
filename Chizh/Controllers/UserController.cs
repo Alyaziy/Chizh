@@ -1,6 +1,8 @@
 ﻿using Chizh.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace Chizh.Controllers
 {
@@ -48,6 +50,59 @@ namespace Chizh.Controllers
             });
         }
 
+        [HttpPost("Register")]
+        public async void GetRegister(UserDTO user)
+        {
+            var u = new User
+            {
+                Name = user.Name,
+                Password = user.Password,
+                Weight = user.Weight, 
+                Height = user.Height
+            };
+            _context.Add(u);
+            _context.SaveChanges();
+        }
+
+        [HttpPut("{id}")] //Редактирование юзера
+        public async Task<ActionResult<User>> EditUser(int id, UserDTO userDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var existingUser = await _context.Users.FirstOrDefaultAsync(s => s.Id == id);
+            if (existingUser == null)
+            {
+                return NotFound();
+            }
+
+            existingUser.Name = userDTO.Name;
+            existingUser.Password = userDTO.Password;
+            existingUser.Weight = userDTO.Weight;
+            existingUser.Height = userDTO.Height;
+
+            _context.Entry(existingUser).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!UserExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return NoContent();
+        }
+
         [HttpPost("UserLogin")]
         public ActionResult<UserDTO> UserLogin(UserDTO userDTO)
         {
@@ -69,6 +124,11 @@ namespace Chizh.Controllers
                 return BadRequest("нЕПРАВИЛЬНЫЙ лОгин или пароль");
             }
 
+        }
+
+        private bool UserExists(int id)
+        {
+            return (_context.Users?.Any(u => u.Id == id)).GetValueOrDefault();
         }
     }
 }

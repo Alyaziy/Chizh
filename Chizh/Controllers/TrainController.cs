@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace Chizh.Controllers
 {
@@ -17,13 +18,30 @@ namespace Chizh.Controllers
         }
 
         [HttpGet] //Вывод тренировок
-        public async Task<ActionResult<IEnumerable<Train>>> GetTrains()
+        public async Task<ActionResult<IEnumerable<TrainDTO>>> GetTrains()
         {
             if (_context.Trains == null)
             {
                 return NotFound();
             }
-            return await _context.Trains.ToListAsync();
+            var trains = await _context.Trains.Include(s => s.IdPozes).ThenInclude(s=>s.IdMuscleNavigation).ToListAsync();
+            // mega shit
+            var trains2 = trains.Select(s => 
+            new TrainDTO { 
+                Id = s.Id, 
+                TrDescription = s.TrDescription, 
+                TrTime = s.TrTime, 
+                TrTittle = s.TrTittle, 
+                Pozes = s.IdPozes.Select(p=> 
+                new PozeDTO { 
+                    Id = p.Id, 
+                    Description = p.Description, 
+                    IdMuscle = p.IdMuscle, 
+                    Image = p.Image, 
+                    Time = p.Time, 
+                    Tittle = p.Tittle }).ToList()});
+            return trains2.ToList();
+//            return trains.Select(s => new TrainDTO { Id = s.Id, IdMuscle = s.IdMuscle, IdPoze = s.IdPoze, MuTittle = s.IdMuscleNavigation.MuTittle, TrDescription = s.TrDescription, TrTime = s.TrTime, TrTittle = s.TrTittle }).ToList();
         }
 
         [HttpGet("{id}")] //Вывод трени по айди
@@ -45,14 +63,14 @@ namespace Chizh.Controllers
         [HttpPost("AddTrain")] //Добавление трени
         public async void AddTrain(TrainDTO train)
         {
-            _context.Add(new Train
+            var t = new Train
             {
                 TrTittle = train.TrTittle,
                 TrDescription = train.TrDescription,
-                TrTime = train.TrTime,
-                IdPoze = train.IdPoze,
-                IdMuscle = train.IdMuscle
-            });
+                TrTime = train.TrTime
+            };
+            t.IdPozes = train.Pozes.Select(p=>_context.Pozes.Find(p.Id)).ToList();
+            _context.Add(t);
             _context.SaveChanges();
         }
 
@@ -64,7 +82,7 @@ namespace Chizh.Controllers
                 return BadRequest(ModelState);
             }
 
-            var existingTrain = await _context.Trains.FirstOrDefaultAsync(s => s.Id == id);
+            var existingTrain = await _context.Trains.Include(s=>s.IdPozes).FirstOrDefaultAsync(s => s.Id == id);
             if (existingTrain == null)
             {
                 return NotFound();
@@ -73,8 +91,8 @@ namespace Chizh.Controllers
             existingTrain.TrTittle = trainDTO.TrTittle;
             existingTrain.TrDescription = trainDTO.TrDescription;
             existingTrain.TrTime = trainDTO.TrTime;
-            existingTrain.IdPoze = trainDTO.IdPoze;
-            existingTrain.IdMuscle = trainDTO.IdMuscle;
+
+            existingTrain.IdPozes = trainDTO.Pozes.Select(p => _context.Pozes.Find(p.Id)).ToList();
 
             _context.Entry(existingTrain).State = EntityState.Modified;
 
@@ -114,10 +132,11 @@ namespace Chizh.Controllers
             return NoContent();
         }
 
-        private bool TrainExists(int id) 
+        private bool TrainExists(int id)
         {
             return (_context.Trains?.Any(e => e.Id == id)).GetValueOrDefault();
-        }
 
+
+        }
     }
 }

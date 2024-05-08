@@ -42,6 +42,25 @@ namespace Chizh.Controllers
             return poze;
         }
 
+        [HttpGet("GetPozeByMuscle")]
+        public async Task<ActionResult<List<PozeDTO>>> GetPoze1(int muscle)
+        {
+            var h = await _context.Pozes.Include(s => s.IdMuscleNavigation).Where(s => s.IdMuscle == muscle).OrderBy(s => s.Id).ToListAsync();
+
+            var hz = h.Select(s => new PozeDTO
+            {
+                Muscle = s.IdMuscleNavigation.MuTittle,
+                IdMuscle = s.IdMuscle,
+                Tittle = s.Tittle,
+                Description = s.Description,
+                Image = s.Image,
+                Time = s.Time,
+                Id = s.Id,
+
+            });
+            return hz.ToList();
+        }
+
         [HttpPost("AddPoze")] //Добавление позы
         public async void AddPoze(PozeDTO poze)
         {
@@ -57,7 +76,7 @@ namespace Chizh.Controllers
         }
 
         [HttpPut("{id}")] //Редактирование позы
-        public async Task<ActionResult<Train>> EditPoze(int id, PozeDTO pozeDTO)
+        public async Task<ActionResult<Poze>> EditPoze(int id, PozeDTO pozeDTO)
         {
             if (!ModelState.IsValid)
             {

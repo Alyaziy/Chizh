@@ -19,5 +19,5 @@ public partial class Poze
 
     public virtual Muscle? IdMuscleNavigation { get; set; }
 
-    public virtual ICollection<Train> Trains { get; set; } = new List<Train>();
+    public virtual ICollection<Train> IdTrains { get; set; } = new List<Train>();
 }

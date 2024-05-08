@@ -77,15 +77,22 @@ public partial class User24Context : DbContext
             entity.ToTable("Train");
 
             entity.Property(e => e.TrTime).HasColumnType("decimal(18, 0)");
-            entity.Property(e => e.TrTittle).HasMaxLength(10);
 
-            entity.HasOne(d => d.IdMuscleNavigation).WithMany(p => p.Trains)
-                .HasForeignKey(d => d.IdMuscle)
-                .HasConstraintName("FK_Train_Muscle");
-
-            entity.HasOne(d => d.IdPozeNavigation).WithMany(p => p.Trains)
-                .HasForeignKey(d => d.IdPoze)
-                .HasConstraintName("FK_Train_Poze");
+            entity.HasMany(d => d.IdPozes).WithMany(p => p.IdTrains)
+                .UsingEntity<Dictionary<string, object>>(
+                    "TrainPoze",
+                    r => r.HasOne<Poze>().WithMany()
+                        .HasForeignKey("IdPoze")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_TrainPoze_Poze"),
+                    l => l.HasOne<Train>().WithMany()
+                        .HasForeignKey("IdTrain")
+                        .HasConstraintName("FK_TrainPoze_Train"),
+                    j =>
+                    {
+                        j.HasKey("IdTrain", "IdPoze");
+                        j.ToTable("TrainPoze");
+                    });
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -94,7 +101,6 @@ public partial class User24Context : DbContext
 
             entity.Property(e => e.Name).HasMaxLength(10);
             entity.Property(e => e.Password).HasMaxLength(50);
-            entity.Property(e => e.Weight).HasColumnType("decimal(18, 0)");
         });
 
         OnModelCreatingPartial(modelBuilder);

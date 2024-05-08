@@ -11,13 +11,7 @@ public partial class Train
 
     public string? TrDescription { get; set; }
 
-    public int? IdPoze { get; set; }
-
-    public int? IdMuscle { get; set; }
-
     public decimal? TrTime { get; set; }
 
-    public virtual Muscle? IdMuscleNavigation { get; set; }
-
-    public virtual Poze? IdPozeNavigation { get; set; }
+    public virtual ICollection<Poze> IdPozes { get; set; } = new List<Poze>();
 }

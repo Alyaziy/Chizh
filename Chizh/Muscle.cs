@@ -10,6 +10,4 @@ public partial class Muscle
     public string? MuTittle { get; set; }
 
     public virtual ICollection<Poze> Pozes { get; set; } = new List<Poze>();
-
-    public virtual ICollection<Train> Trains { get; set; } = new List<Train>();
 }
